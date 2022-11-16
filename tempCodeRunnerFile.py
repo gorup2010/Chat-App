@@ -5,7 +5,7 @@ import tkinter.scrolledtext
 import socket
 
 login = tkinter.Tk()
-login.title('Đăng nhập')
+login.title('Login')
 login.geometry('250x200')
 
 login.mainloop()
