@@ -1,8 +1,8 @@
-import tkinter
+import socket
 import threading
+import tkinter
 from tkinter import simpledialog
 import tkinter.scrolledtext
-import socket
 
 username = "lauhoi"
 

@@ -1,71 +1,103 @@
 import os
 import socket
 import threading
+import json
+import tkinter
+from tkinter import simpledialog
+import tkinter.scrolledtext
 
+PORT = 8080
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 5050
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
+LOGOUT_MSG = "LOGOUT"
+LOGIN_MSG = "LOGIN"
+SIGNUP_MSG = "SIGNUP"
+CLOSE_MSG = "CLOSE"
 
-# Tạo tài khoản mới
-def createNewAccount(username, password):
-    # Kiểm tra tài khoản đã tạo chưa
-    # PATH_TO_FILE: đường dẫn đến file
-    PATH_TO_FILE = f'Account\{username}'
-    if not os.path.exists(PATH_TO_FILE):
-        newAcc = open(PATH_TO_FILE, 'w')
-        newAcc.write(password)
-        print("CREATE NEW FILE SUCCESS!")
-    else:
-        print("ERROR: ACCCOUNT IS EXIST!")
-
-
-# Kiểm tra username và password
-def validationAccount(username, password):
-    PATH_TO_FILE = f'Account\{username}'
-    # Kiểm tra xem username có tồn tại chưa
-    if os.path.exists(PATH_TO_FILE):
-        file = open(PATH_TO_FILE, 'r')
-        passwordInFile = file.readline()
-        # Kiểm tra xem password có đúng không
-        if password == passwordInFile:
-            print("LOGIN SUCCEED!")
-        else:
-            print("INVALID PASSWORD!")
-    else:
-        print("USERNAME CANNOT FOUND!")
-
-
-# Bắt đầu đợi connection từ client
-def start():
-    server.listen()
-    print("SERVER IS LISTINING!")
-    while True:
-        conn, addr = server.accept()
-        # Tạo một thread mới để xử lí connection của client
-        thread = threading.Thread(handleClient, (conn, addr))
-        thread.start()
-
-
-# Hàm dùng để thao tác với từng client
-def handleClient(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
-
-    connected = True
-    while connected:
-        # Đợi nhận msg từ client
-        msg = conn.recv(1024).decode(FORMAT)
-        # Nếu client gửi yêu cầu DISCONNECT, thoát vòng lặp và server sẽ đóng socket
-        if msg == DISCONNECT_MESSAGE:
-            connected = False
-
-        # In ra msg của client và gửi msg thông báo nhận msg thành công cho client
-        print(f"[{addr}] {msg}")
-        conn.send("Msg received".encode(FORMAT))
+class Server:
+    def __init__(self):
+        self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_s.bind((HOST, PORT))
     
-    # Server đóng socket
-    conn.close()
+    def __del__(self):
+        self.server_s.close()
+        print("Da dong server")
 
+    # Server sẽ bắt đầu nhận yêu cầu kết nối từ client và thực hiện kết nối
+    def start(self):
+        self.server_s.listen()
+        print("Server start")
+        while True:
+            conn_s, address = self.server_s.accept()
+            print(f"Connect with {str(address)}")
+            # Tạo một thread mới để chạy connection với client
+            thread = threading.Thread(target=self.handle, args=(conn_s, address))
+            thread.start()
+
+    def handle(self, conn_s, address):
+        print(f"New thread create to handle {str(address)}")
+        while True:
+            msg = conn_s.recv(1024).decode('utf-8')
+            if msg != "":
+                print(f"Nhan duoc msg: {msg}")
+            command, content = msg.split(':', 1)
+
+            result = ""
+            if command == SIGNUP_MSG:
+                result = self.create_new_account(content)
+            if command == LOGIN_MSG:
+                result = self.validation_account(content)
+            if command == CLOSE_MSG:
+                conn_s.send("SUCCEED".encode('utf-8'))
+                conn_s.close()
+                print("Da dong socket")
+                break
+            if result != "":
+                conn_s.send(result.encode('utf-8'))
+
+    # Tạo tài khoản mới
+    def create_new_account(self, username):
+        if not os.path.exists('user.json'):
+            data = {
+                username: {
+                    "status" : True,
+                    "friend" : []
+                }
+            }
+            with open('user.json', 'w') as file:
+                json.dump(data, file, indent=2)
+            result = "SUCCEED"        
+        else:
+            with open('user.json', 'r') as file:
+                data = json.load(file)
+            if username in data:
+                result = "FAIL"
+            else:
+                data[username] = {
+                    "status" : True,
+                    "friend" : []
+                }
+                with open('user.json', 'w') as file:
+                    json.dump(data, file, indent=2)
+                result = "SUCCEED"
+        return result
+
+    # Kiểm tra username
+    def validation_account(self, username):
+        if not os.path.exists('user.json'):
+            result = "FaIL"
+        else:
+            with open('user.json', 'r') as file:
+                data = json.load(file)
+            if username in data:
+                result = "SUCCEED"
+            else:
+                result = "FAIL"
+        return result
+
+    def close_conn(self, conn):
+        conn.close()
+        return "SUCCEED"
+
+server = Server()
+server.start()

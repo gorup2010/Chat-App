@@ -1,8 +1,8 @@
-import tkinter
+import socket
 import threading
+import tkinter
 from tkinter import simpledialog
 import tkinter.scrolledtext
-import socket
 
 login = tkinter.Tk()
 login.title('Đăng nhập')
@@ -23,4 +23,10 @@ btn_login.grid(column=1,row=1, padx=10)
 btn_signup = tkinter.Button(master=frm_button, text='Đăng kí', width=10)
 btn_signup.grid(column=2,row=1, padx=10)
 
+def pro():
+    print("DDDDDD")
+    login.destroy()
+
+login.protocol("WM_DELETE_WINDOW", pro)
 login.mainloop()
+
