@@ -18,6 +18,8 @@ class Server:
     def __init__(self):
         self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_s.bind((HOST, PORT))
+        # List theo dõi các user đang online
+        self.onl_li = []
     
     def __del__(self):
         self.server_s.close()
@@ -47,10 +49,13 @@ class Server:
                 result = self.create_new_account(content)
             if command == LOGIN_MSG:
                 result = self.validation_account(content)
-            if command == CLOSE_MSG:
+            if command == LOGOUT_MSG:
+                result = self.log_out(content)
+            if command == CLOSE_MSG:    # Client yêu cầu ngắt kết nối
+                # Gửi phản hồi về cho client và đóng socket
                 conn_s.send("SUCCEED".encode('utf-8'))
                 conn_s.close()
-                print("Da dong socket")
+                print(f"Connection with {str(address)} close")
                 break
             if result != "":
                 conn_s.send(result.encode('utf-8'))
@@ -66,7 +71,8 @@ class Server:
             }
             with open('user.json', 'w') as file:
                 json.dump(data, file, indent=2)
-            result = "SUCCEED"        
+            result = "SUCCEED"
+            print(f"New account: {username}")       
         else:
             with open('user.json', 'r') as file:
                 data = json.load(file)
@@ -80,24 +86,50 @@ class Server:
                 with open('user.json', 'w') as file:
                     json.dump(data, file, indent=2)
                 result = "SUCCEED"
+                print(f"New account: {username}")  
         return result
 
     # Kiểm tra username
     def validation_account(self, username):
         if not os.path.exists('user.json'):
-            result = "FaIL"
+            result = "FAIL"
         else:
             with open('user.json', 'r') as file:
                 data = json.load(file)
             if username in data:
+                # Chỉnh sửa trạng thái của user thành online
+                data[username]["status"] = True
+                with open('user.json', 'w') as file:
+                    json.dump(data, file, indent=2)
+                
                 result = "SUCCEED"
+                print(f"{username} log in")  
             else:
                 result = "FAIL"
         return result
 
-    def close_conn(self, conn):
-        conn.close()
+    # Username yêu cầu đăng xuất
+    def log_out(self, username):
+        # Xóa user trong onl user list
+        self.onl_li.remove(username)
+
+        # Chỉnh sửa trạng thái của user thành offline
+        with open('user.json', 'r') as file:
+                data = json.load(file)
+        data[username]["status"] = False
+        with open('user.json', 'w') as file:
+            json.dump(data, file, indent=2)
+        print(f"{username} log out")
         return "SUCCEED"
+
+    # Lấy danh sách bạn bè của user
+    def retrieve_fr(self, username):
+        with open('user.json', 'r') as file:
+            data = json.load(file)
+        res = data[username]["friend"]
+        return res
+
+
 
 server = Server()
 server.start()

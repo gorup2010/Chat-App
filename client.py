@@ -4,10 +4,11 @@ import tkinter
 from tkinter import simpledialog
 import tkinter.scrolledtext
 from tkinter import ttk
+import random
 
 SERVER_PORT = 8080
 SERVER_HOST = socket.gethostbyname(socket.gethostname())
-LISTEN_PORT = 5050
+LISTEN_PORT = 5050 + random.randint(1, 100)
 HOST = socket.gethostbyname(socket.gethostname())
 
 LOGOUT_MSG = "LOGOUT"
@@ -77,14 +78,36 @@ class main_window:
         self.main.rowconfigure(index=1, weight=1)
 
         #Tạo button để reset danh sách bạn bè và user online
-        self.btn_reset = tkinter.Button(master=self.main, width=10, text="Reset", font=10)
-        self.btn_reset.grid(row=2, column=0, columnspan=2, pady = 10)
-    
+        self.btn_reset = tkinter.Button(master=self.main, width=10, text="Reset", font=10, command=self.reset)
+        self.btn_reset.grid(row=2, column=0, pady = 10)
+
+        #Tạo button đăng xuất
+        self.btn_exit = tkinter.Button(master=self.main, width=10, text="Log Out", font=10, command=self.log_out)
+        self.btn_exit.grid(row=2, column=1, pady = 10)
+
+        self.main.protocol("WM_DELETE_WINDOW", self.log_out)
+
     def start(self):
         self.main.mainloop()
 
-    def close(self):
+    def reset(self):
         pass
+
+    def log_out(self):
+        # Ngắt hết kết nối với các user khác
+
+        # Gửi log out msg cho server
+        msg = LOGOUT_MSG + ":" + Client.username
+        Client.conns_s.send(msg.encode('utf-8'))
+
+        # Đợi phản hồi từ server
+        msg = Client.conns_s.recv(1024).decode('utf-8')
+        if msg == "SUCCEED":
+            # Trở lại cửa sổ đăng nhập
+            Client.username = ""
+            self.main.destroy()
+            login = login_window()
+            login.start()
 
 # Cửa sổ đăng nhập, đăng ký
 class login_window:
@@ -116,13 +139,13 @@ class login_window:
 
     def send_login(self):
         # Gửi login request cho server
-        msg = LOGIN_MSG + ":" + self.username_entry.get()
+        username = self.username_entry.get()
+        msg = LOGIN_MSG + ":" + username
         Client.conns_s.send(msg.encode('utf-8'))
         self.username_entry.delete('0', 'end')
 
         # Kiểm tra kết quả
         result = Client.conns_s.recv(1024).decode('utf-8')
-        print(result)
         if (result == "FAIL"):
             fail_window = tkinter.Toplevel()
             fail_window.title("Thất bại")
@@ -130,17 +153,20 @@ class login_window:
             fail_txt.pack(padx=4, pady=4)
             fail_window.mainloop()
         if (result == "SUCCEED"):
+            Client.username = username
+            user_info = (username, HOST, LISTEN_PORT)
+            
             self.close()
 
     def send_signup(self):
         # Gửi signup request cho server
-        msg = SIGNUP_MSG + ":" + self.username_entry.get()
+        username = self.username_entry.get()
+        msg = SIGNUP_MSG + ":" + username
         Client.conns_s.send(msg.encode('utf-8'))
         self.username_entry.delete('0', 'end')
 
         # Kiểm tra kết quả
         result = Client.conns_s.recv(1024).decode('utf-8')
-        print(result)
         if (result == "FAIL"):
             fail_window = tkinter.Toplevel()
             fail_window.title("Thất bại")
@@ -148,6 +174,7 @@ class login_window:
             fail_txt.pack(padx=4, pady=4)
             fail_window.mainloop()
         if (result == "SUCCEED"):
+            Client.username = username
             self.close()
 
     # Khi ta đăng nhập hoặc đăng ký thành công, cửa sổ đăng nhập sẽ đóng và chuyển sang cửa sổ main_waindow
@@ -168,7 +195,6 @@ class login_window:
             Client.conns_s.close()
             Client.listen_s.close()
             self.login.destroy()
-            print("Da dong thanh cong")
         
 class Client:
     # Socket để listen connection từ các client khác
@@ -178,6 +204,9 @@ class Client:
     # Socket kết nối với server
     conns_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conns_s.connect((SERVER_HOST, SERVER_PORT))
+
+    # Username của client (sẽ có khi đăng nhập thành công)
+    username = ""
 
     def __init__(self):        
         self.login_win = login_window()

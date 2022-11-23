@@ -1,11 +1,5 @@
-class foo:
-    x = 9
-    def fun(ab):
-        print("hal" + ab)
-    def afun(self):
-        self.fun("haha")
-
-x = foo()
+d = ["hai", "haha"]
+del d[]
 
 # class Person:
 #   def __init__(mysillyobject, name, age):

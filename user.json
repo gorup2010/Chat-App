@@ -1,10 +1,10 @@
 {
-  "Hoi": {
-    "status": true,
+  "Hai": {
+    "status": false,
     "friend": []
   },
-  "Da vao loi": {
-    "status": true,
+  "Haii": {
+    "status": false,
     "friend": []
   }
 }
