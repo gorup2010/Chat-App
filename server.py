@@ -5,6 +5,7 @@ import json
 import tkinter
 from tkinter import simpledialog
 import tkinter.scrolledtext
+import pickle
 
 PORT = 8080
 HOST = socket.gethostbyname(socket.gethostname())
@@ -13,13 +14,17 @@ LOGOUT_MSG = "LOGOUT"
 LOGIN_MSG = "LOGIN"
 SIGNUP_MSG = "SIGNUP"
 CLOSE_MSG = "CLOSE"
+RETRIEVE_FR_MSG = "FRIEND"
+RETRIEVE_ONL_MSG = "ONLINE"
 
 class Server:
     def __init__(self):
         self.server_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_s.bind((HOST, PORT))
-        # List theo dõi các user đang online
-        self.onl_li = []
+
+        # Dictionary theo dõi các user đang online
+        # { username : address (host user, listen port user) }
+        self.onl_dict = {}
     
     def __del__(self):
         self.server_s.close()
@@ -51,6 +56,12 @@ class Server:
                 result = self.validation_account(content)
             if command == LOGOUT_MSG:
                 result = self.log_out(content)
+            if command == RETRIEVE_FR_MSG:
+                list_of_fr = self.retrieve_fr(content)
+                conn_s.send(pickle.dumps(list_of_fr))
+            if command == RETRIEVE_ONL_MSG:
+                list_of_onl_user = self.retrieve_onl_user()
+                conn_s.send(pickle.dumps(list_of_onl_user))
             if command == CLOSE_MSG:    # Client yêu cầu ngắt kết nối
                 # Gửi phản hồi về cho client và đóng socket
                 conn_s.send("SUCCEED".encode('utf-8'))
@@ -61,8 +72,12 @@ class Server:
                 conn_s.send(result.encode('utf-8'))
 
     # Tạo tài khoản mới
-    def create_new_account(self, username):
+    def create_new_account(self, info_user):
+        username, host, listen_port = info_user.split(':', 2)
+        listen_port = int(listen_port)
+
         if not os.path.exists('user.json'):
+            # Thêm tài khoản vào file user.json
             data = {
                 username: {
                     "status" : True,
@@ -72,6 +87,10 @@ class Server:
             with open('user.json', 'w') as file:
                 json.dump(data, file, indent=2)
             result = "SUCCEED"
+
+            # Thêm user vào dict on_user
+            self.onl_dict[username] = (host, listen_port)
+
             print(f"New account: {username}")       
         else:
             with open('user.json', 'r') as file:
@@ -79,6 +98,7 @@ class Server:
             if username in data:
                 result = "FAIL"
             else:
+                # Thêm tài khoản vào file user.json
                 data[username] = {
                     "status" : True,
                     "friend" : []
@@ -86,11 +106,18 @@ class Server:
                 with open('user.json', 'w') as file:
                     json.dump(data, file, indent=2)
                 result = "SUCCEED"
+
+                # Thêm user vào dict on_user
+                self.onl_dict[username] = (host, listen_port)
+
                 print(f"New account: {username}")  
         return result
 
     # Kiểm tra username
-    def validation_account(self, username):
+    def validation_account(self, info_user):
+        username, host, listen_port = info_user.split(':', 2)
+        listen_port = int(listen_port)
+
         if not os.path.exists('user.json'):
             result = "FAIL"
         else:
@@ -101,9 +128,11 @@ class Server:
                 data[username]["status"] = True
                 with open('user.json', 'w') as file:
                     json.dump(data, file, indent=2)
-                
                 result = "SUCCEED"
                 print(f"{username} log in")  
+
+                # Thêm user vào dict on_user
+                self.onl_dict[username] = (host, listen_port)
             else:
                 result = "FAIL"
         return result
@@ -111,7 +140,7 @@ class Server:
     # Username yêu cầu đăng xuất
     def log_out(self, username):
         # Xóa user trong onl user list
-        self.onl_li.remove(username)
+        del self.onl_dict[username]
 
         # Chỉnh sửa trạng thái của user thành offline
         with open('user.json', 'r') as file:
@@ -129,7 +158,9 @@ class Server:
         res = data[username]["friend"]
         return res
 
-
+    # Lấy danh sách user online
+    def retrieve_onl_user(self):
+        return list(self.onl_dict)
 
 server = Server()
 server.start()

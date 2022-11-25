@@ -5,6 +5,7 @@ from tkinter import simpledialog
 import tkinter.scrolledtext
 from tkinter import ttk
 import random
+import pickle
 
 SERVER_PORT = 8080
 SERVER_HOST = socket.gethostbyname(socket.gethostname())
@@ -15,6 +16,8 @@ LOGOUT_MSG = "LOGOUT"
 LOGIN_MSG = "LOGIN"
 SIGNUP_MSG = "SIGNUP"
 CLOSE_MSG = "CLOSE"
+RETRIEVE_FR_MSG = "FRIEND"
+RETRIEVE_ONL_MSG = "ONLINE"
 
 # Main window sẽ chạy khi ta đăng nhập hay đăng ký thành công
 class main_window:
@@ -48,9 +51,6 @@ class main_window:
 
         self.fr_canvas.create_window((0,0), window=self.fr_second_frame, anchor="nw")
 
-        for thing in range(100):
-	        tkinter.Button(self.fr_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=10, padx=10)
-
         # Tạo frame hiển thị user online
         self.frm_onl_user = tkinter.Frame(master=self.main, borderwidth= 4, relief="groove")
         self.frm_onl_user.grid(row=1, column=1, sticky='nwes')
@@ -68,9 +68,6 @@ class main_window:
         self.on_second_frame = tkinter.Frame(self.on_canvas)
 
         self.on_canvas.create_window((0,0), window=self.on_second_frame, anchor="nw")
-
-        for thing in range(100):
-	        tkinter.Button(self.on_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=10, padx=10)
 
         # Config 2 frame bạn bè và user online
         self.main.columnconfigure(index=0, weight=1)
@@ -91,7 +88,39 @@ class main_window:
         self.main.mainloop()
 
     def reset(self):
-        pass
+    # Lấy danh sách bạn bè
+        #Gửi yêu cầu lấy ds bạn bè
+        msg = RETRIEVE_FR_MSG + ":" + Client.username
+        Client.conns_s.send(msg.encode('utf-8'))
+        # Nhận list ds bạn bè
+        temp = Client.conns_s.recv(1024)
+        Client.list_of_friend = pickle.loads(temp)
+
+    # Lấy danh sách online user
+        #Gửi yêu cầu lấy ds online user
+        msg = RETRIEVE_ONL_MSG + ":"
+        Client.conns_s.send(msg.encode('utf-8'))
+        # Nhận list ds online user
+        temp = Client.conns_s.recv(1024)
+        Client.list_of_onl_user = pickle.loads(temp)
+
+    # Hiển thị danh sách user online trên frame user online
+        for widget in self.on_second_frame.winfo_children():
+            widget.destroy()
+        for i in range(len(Client.list_of_onl_user)):
+            if Client.list_of_onl_user[i] != Client.username:
+                btn = tkinter.Button(self.on_second_frame, text=f"{Client.list_of_onl_user[i]}", font=5)
+                btn.grid(row=i, column=0, pady=10, padx=10)
+    
+    # Hiển thị danh sách bạn bè của user
+        for widget in self.fr_second_frame.winfo_children():
+            widget.destroy()
+        for i in range(len(Client.list_of_friend)):
+            if Client.list_of_friend[i] in Client.list_of_onl_user: 
+                btn = tkinter.Button(self.fr_second_frame, text=f"{Client.list_of_friend[i]}", font=5)
+            else:
+                btn = tkinter.Button(self.fr_second_frame, text=f"{Client.list_of_friend[i]}", font=5, state="disabled")
+            btn.grid(row=i, column=0, pady=10, padx=10)
 
     def log_out(self):
         # Ngắt hết kết nối với các user khác
@@ -140,7 +169,7 @@ class login_window:
     def send_login(self):
         # Gửi login request cho server
         username = self.username_entry.get()
-        msg = LOGIN_MSG + ":" + username
+        msg = LOGIN_MSG + ":" + username + ":" + HOST + ":" + str(LISTEN_PORT)
         Client.conns_s.send(msg.encode('utf-8'))
         self.username_entry.delete('0', 'end')
 
@@ -153,15 +182,13 @@ class login_window:
             fail_txt.pack(padx=4, pady=4)
             fail_window.mainloop()
         if (result == "SUCCEED"):
-            Client.username = username
-            user_info = (username, HOST, LISTEN_PORT)
-            
+            Client.username = username            
             self.close()
 
     def send_signup(self):
         # Gửi signup request cho server
         username = self.username_entry.get()
-        msg = SIGNUP_MSG + ":" + username
+        msg = SIGNUP_MSG + ":" + username + ":" + HOST + ":" + str(LISTEN_PORT)
         Client.conns_s.send(msg.encode('utf-8'))
         self.username_entry.delete('0', 'end')
 
@@ -208,6 +235,9 @@ class Client:
     # Username của client (sẽ có khi đăng nhập thành công)
     username = ""
 
+    list_of_friend = []
+    list_of_onl_user = []
+
     def __init__(self):        
         self.login_win = login_window()
         self.login_win.start()
@@ -215,5 +245,11 @@ class Client:
     def __del__(self):
         self.listen_s.close()
         print("Da dong client")
+
+    def send_addr_to_server(self):
+        msg = ADDR_MSG + ":" + HOST + ":" + LISTEN_PORT
+        self.conns_s.send(msg.encode('utf-8'))
+        
+
 
 client = Client()

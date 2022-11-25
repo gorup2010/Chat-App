@@ -35,8 +35,8 @@ class main_window:
 
         self.fr_canvas.create_window((0,0), window=self.fr_second_frame, anchor="nw")
 
-        for thing in range(100):
-	        tkinter.Button(self.fr_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=10, padx=10)
+        # for thing in range(100):
+	    #   tkinter.Button(self.fr_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=10, padx=10)
 
         # Tạo frame hiển thị user online
         self.frm_onl_user = tkinter.Frame(master=self.main, borderwidth= 4, relief="groove")
@@ -56,8 +56,8 @@ class main_window:
 
         self.on_canvas.create_window((0,0), window=self.on_second_frame, anchor="nw")
 
-        for thing in range(100):
-	        tkinter.Button(self.on_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=10, padx=10)
+        # for thing in range(100):
+	    #     tkinter.Button(self.on_second_frame, text=f'Button {thing} Yo!').grid(row=thing, column=0, pady=4, padx=4)
 
         # Config 2 frame bạn bè và user online
         self.main.columnconfigure(index=0, weight=1)

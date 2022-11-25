@@ -1,10 +1,42 @@
 {
   "Hai": {
     "status": false,
-    "friend": []
+    "friend": [
+      "Haii"
+    ]
   },
   "Haii": {
     "status": false,
-    "friend": []
+    "friend": [
+      "Hai",
+      "Hung",
+      "Ha",
+      "Linh"
+    ]
+  },
+  "Hung": {
+    "status": false,
+    "friend": [
+      "Haii"
+    ]
+  },
+  "Ha": {
+    "status": false,
+    "friend": [
+      "Haii"
+    ]
+  },
+  "Linh": {
+    "status": false,
+    "friend": [
+      "Tu",
+      "Haii"
+    ]
+  },
+  "Tu": {
+    "status": false,
+    "friend": [
+      "Linh"
+    ]
   }
 }
