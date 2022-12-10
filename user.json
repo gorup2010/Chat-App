@@ -3,7 +3,9 @@
     "status": false,
     "friend": [
       "Haii"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   },
   "Haii": {
     "status": false,
@@ -12,31 +14,41 @@
       "Hung",
       "Ha",
       "Linh"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   },
   "Hung": {
     "status": false,
     "friend": [
       "Haii"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   },
   "Ha": {
     "status": false,
     "friend": [
       "Haii"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   },
   "Linh": {
     "status": false,
     "friend": [
       "Tu",
       "Haii"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   },
   "Tu": {
     "status": false,
     "friend": [
       "Linh"
-    ]
+    ],
+    "fr_request": [],
+    "send_fr_request": []
   }
 }

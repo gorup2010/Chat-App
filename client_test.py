@@ -20,12 +20,21 @@ SIGNUP_MSG = "SIGNUP"
 CLOSE_MSG = "CLOSE"
 RETRIEVE_FR_MSG = "FRIEND"
 RETRIEVE_ONL_MSG = "ONLINE"
+RETRIEVE_FR_REQUEST_MSG = "FRREQUEST"
+RETRIEVE_SEND_FR_REQUEST_MSG = "SREREQUEST"
+RETRIEVE_ADDRESS = "ADDR"
 ADDFRIEND_MSG = "ADD"
-# Message 
+ACCEPT_MSG = "ACCEPT"
+
+# Message nhận được từ server
+# ADDFRIEND_MSG = "ADD"
+# ACCEPT_MSG = "ACCEPT"
+
+# Message gửi cho client
 CHAT_MSG = "CHAT"
 
 # Main window sẽ chạy khi ta đăng nhập hay đăng ký thành công
-class main_window:
+class man_window:
     def __init__(self):
         self.main = tkinter.Tk()
         self.main.title(f'Chào mừng trở lại {Client.username}')
@@ -132,8 +141,113 @@ class main_window:
     def add_friend(self, other_username):
         # Gửi yêu cầu kết bạn với máy chủ
         # msg bao gồm username của user và người user muốn kết bạn
-        msg = ADDFRIEND_MSG + ":" + other_username
+        msg = ADDFRIEND_MSG + ":" + Client.username + ":" + other_username
         Client.conns_s.send(msg.encode('utf-8'))
+
+
+class main_window:
+    def __init__(self):
+        self.main = tkinter.Tk()
+        self.main.title(f'Chào mừng trở lại {Client.username}')
+
+        self.create_main_frame()
+        self.create_friend_frame()
+        self.create_onl_user_frame()
+        self.create_fr_request_frame()
+        self.create_send_fr_request_frame()
+
+        self.current_fr = None
+
+        self.main.protocol("WM_DELETE_WINDOW", self.log_out)
+
+    # Bắt đầu hiện màn hình chat app
+    def start(self):
+        self.main_fr.grid(row=0, column=0)
+        self.main.mainloop()
+
+    def create_main_frame(self):
+        self.main_fr = tkinter.Frame(self.main)
+
+        self.btn_friend = tkinter.Button(self.main_fr, text="Bạn bè", command=self.show_friend, font=6)
+        self.btn_friend.grid(row=0,column=0,sticky='nwes')
+
+        self.btn_onl_user = tkinter.Button(self.main_fr, text="Người dùng online", command=self.show_onl_user, font=6)
+        self.btn_onl_user.grid(row=0,column=1,sticky='nwes')
+
+        self.btn_fr_request = tkinter.Button(self.main_fr, text="Lời mời kết bạn", command=self.show_fr_request, font=6)
+        self.btn_fr_request.grid(row=1,column=0,sticky='nwes')
+
+        self.btn_send_fr_request = tkinter.Button(self.main_fr, text="Lời mời kết bạn đã gửi", command=self.show_send_fr_request, font=6)
+        self.btn_send_fr_request.grid(row=1,column=1,sticky='nwes')
+
+        self.btn_log_out = tkinter.Button(self.main_fr, text="Đăng xuất", command=self.log_out, font=6)
+        self.btn_log_out.grid(row=2,column=0, sticky='nwes')
+
+        self.main_fr.columnconfigure(index=0, weight=1)
+        self.main_fr.columnconfigure(index=1, weight=1)
+
+        self.main_fr.rowconfigure(index=0, weight=1)
+        self.main_fr.rowconfigure(index=1, weight=1)
+        self.main_fr.rowconfigure(index=2, weight=1)
+
+    def create_friend_frame(self):
+        self.friend_fr = tkinter.Frame(self.main)
+        self.label = tkinter.Label(self.friend_fr, text="Danh sách bạn bè", font=6, width=40)
+        self.label.pack(padx=4,pady=4)
+
+        for friend in Client.list_of_friend:
+            pass
+
+        self.return_btn = tkinter.Button(self.friend_fr, text="Quay lại", command=self.show_main, font=6)
+        self.return_btn.pack(padx=4,pady=4)
+
+    def create_onl_user_frame(self):
+        self.onl_user_fr = tkinter.Frame(self.main)
+        self.label = tkinter.Label(self.onl_user_fr, text="Danh sách người dùng đang online", font=6, width=40)
+        self.label.pack(padx=4,pady=4)
+
+        self.return_btn = tkinter.Button(self.onl_user_fr, text="Quay lại", command=self.show_main, font=6)
+        self.return_btn.pack(padx=4,pady=4)
+
+    def create_send_fr_request_frame(self):
+        self.send_friend_request_fr = tkinter.Frame(self.main)
+        self.label = tkinter.Label(self.send_friend_request_fr, text="Lời mời kết bạn đã gửi", font=6, width=40)
+        self.label.pack(padx=4,pady=4)
+
+        self.return_btn = tkinter.Button(self.send_friend_request_fr, text="Quay lại", command=self.show_main, font=6)
+        self.return_btn.pack(padx=4,pady=4)
+
+    def create_fr_request_frame(self):
+        self.friend_request_fr = tkinter.Frame(self.main)
+        self.label = tkinter.Label(self.friend_request_fr, text="Lời mời kết bạn", font=6, width=40)
+        self.label.pack(padx=4,pady=4)
+
+        self.return_btn = tkinter.Button(self.friend_request_fr, text="Quay lại", command=self.show_main, font=6)
+        self.return_btn.pack(padx=4,pady=4)
+
+    def show_friend(self):
+        self.main_fr.grid_forget()
+        self.current_fr = self.friend_fr
+        self.friend_fr.grid(row=0, column=0)
+   
+    def show_onl_user(self):
+        self.main_fr.grid_forget()
+        self.current_fr = self.onl_user_fr
+        self.onl_user_fr.grid(row=0, column=0)
+    
+    def show_fr_request(self):
+        self.main_fr.grid_forget()
+        self.current_fr = self.friend_request_fr
+        self.friend_request_fr.grid(row=0, column=0)
+
+    def show_send_fr_request(self):
+        self.main_fr.grid_forget()
+        self.current_fr = self.send_friend_request_fr
+        self.send_friend_request_fr.grid(row=0, column=0)
+
+    def show_main(self):
+        self.current_fr.grid_forget()
+        self.main_fr.grid(row=0, column=0)
 
     def log_out(self):
         # Ngắt hết kết nối với các user khác
@@ -142,14 +256,10 @@ class main_window:
         msg = LOGOUT_MSG + ":"
         Client.conns_s.send(msg.encode('utf-8'))
 
-        # Đợi phản hồi từ server
-        msg = Client.conns_s.recv(1024).decode('utf-8')
-        if msg == "SUCCEED":
-            # Trở lại cửa sổ đăng nhập
-            Client.username = ""
-            self.main.destroy()
-            login = login_window()
-            login.start()
+        # Trở lại cửa sổ đăng nhập
+        Client.log_out()
+        self.main.destroy()
+        Client.show_login()
 
 # Cửa sổ đăng nhập, đăng ký
 class login_window:
@@ -176,7 +286,8 @@ class login_window:
 
         self.login.protocol("WM_DELETE_WINDOW", self.direct_close_win)
 
-    def show(self):    
+    # Bắt đầu loop login window
+    def start(self):
         self.login.mainloop()
 
     def send_login(self):
@@ -197,6 +308,8 @@ class login_window:
         if (result == "SUCCEED"):
             Client.username = username            
             self.hide()
+            Client.retrieve_info_user()
+            Client.start()
 
     def send_signup(self):
         # Gửi signup request cho server
@@ -216,11 +329,15 @@ class login_window:
         if (result == "SUCCEED"):
             Client.username = username
             self.hide()
-
+            Client.start()
+            
     # Khi ta đăng nhập hoặc đăng ký thành công, cửa sổ đăng nhập sẽ đóng và chuyển sang cửa sổ main_waindow
     def hide(self):
         self.login.withdraw()
-        Client.main_win.show()
+
+    # Hàm sẽ hiện login window trở lại khi client logout
+    def show(self):    
+        self.login.deiconify()
 
     # Hàm sẽ chạy khi nhấn nút X để đóng cửa sổ đăng nhập
     def direct_close_win(self):
@@ -247,28 +364,83 @@ class Client:
     # Username của client (sẽ có khi đăng nhập thành công)
     username = ""
 
-    # Danh sách bạn bè, ds online user, ds các phòng chat mà user đang tham gia
-    list_of_friend = []
-    list_of_onl_user = []
-    list_of_chat_room = []
+    # Một số list của client
+    list_of_friend = []                         # Danh sách bạn bè của client
+    list_of_onl_user = []                       # Danh sách online user
+    list_of_chat_room = []                      # Danh sách phòng chat
+    list_of_fr_request = []                     # Danh sách lời mời kết bạn
+    list_of_send_fr_request = []                # Danh sách lời mời kết bạn đã gửi  
 
-    # Danh sách các màn hình của user
+    # Một số biến check điều kiện
+    isLogin = False
+
+    # Một số màn hình của client
     login_win = login_window()
-    main_win = main_window()
+    main_win = None
 
     def __init__(self):        
-        self.login_win.show()
+        Client.login_win.start()
 
     def __del__(self):
         print("Da dong client")
 
+    def create_main():
+        Client.main_win = main_window()
+        Client.main_win.start()
+
+    def show_login():
+        Client.login_win.show()
+
+    def start():
+        Client.isLogin = True
+        Client.retrieve_onl_user()
+        Client.create_main()
+        # Tạo thread listen msg từ server và từ client
+        s_thread = threading.Thread(target=Client.listen_to_server)
+        s_thread.start()
+        c_thread = threading.Thread(target=Client.listen_to_client)
+        c_thread.start()
+
+    # Hàm gửi msg cho server lấy về ds bạn bè, lời mời kết bạn nhận được và đã gửi của user
+    def retrieve_info_user():
+        # Lấy về ds bạn bè
+        msg = RETRIEVE_FR_MSG + ":"
+        Client.conns_s.sendall(msg.encode("utf-8"))
+        data = Client.conns_s.recv(1024)
+        Client.list_of_friend = pickle.loads(data)
+
+        # Lấy về lời mời kết bạn nhận được
+        msg = RETRIEVE_FR_REQUEST_MSG + ":"
+        Client.conns_s.sendall(msg.encode("utf-8"))
+        data = Client.conns_s.recv(1024)
+        Client.list_of_onl_user = pickle.loads(data)
+
+        # Lấy về lời mời kết bạn đã gửi
+        msg = RETRIEVE_SEND_FR_REQUEST_MSG + ":"
+        Client.conns_s.sendall(msg.encode("utf-8"))
+        data = Client.conns_s.recv(1024)
+        Client.list_of_onl_user = pickle.loads(data)
+
+    # Hàm gửi msg cho server lấy về ds các user đang online khác
+    def retrieve_onl_user():
+        msg = RETRIEVE_ONL_MSG + ":"
+        Client.conns_s.sendall(msg.encode("utf-8"))
+        data = Client.conns_s.recv(1024)
+        Client.list_of_onl_user = pickle.loads(data)
+
+    # Socket kết nối với server đợi nhận msg từ server
+    def listen_to_server(self):
+        while Client.isLogin:
+            msg = Client.conns_s.recv(1024).decode("utf-8")
+            command, content = msg.split(':', 1)
+
     # Listen socket bắt đầu đợi nhận message từ các client khác
     def listen_to_client(self):
-        self.listen_s.listen()
-        while True:
-            conn_s, address = self.listen_s.accept()
+        Client.listen_s.listen()
+        while Client.isLogin:
+            conn_s, address = Client.listen_s.accept()
             # Tạo một thread mới để xử lí connection
-            thread = threading.Thread(target=self.handle, args=(conn_s, address))
+            thread = threading.Thread(target=self.handle_client, args=(conn_s, address))
             thread.start()
     
     # Hàm xử lí các message nhận về
@@ -292,5 +464,14 @@ class Client:
 
         deny = tkinter.Button(win, text="Từ chối", font=5)
         deny.grid(row=1, column=1, pady=5, padx=5)
+
+    def log_out():
+        Client.username = ""
+        Client.isLogin = False
+        Client.list_of_chat_room = []
+        Client.list_of_friend = []
+        Client.list_of_onl_user = []
+        Client.list_of_fr_request = []
+        Client.list_of_send_fr_request = []
 
 client = Client()

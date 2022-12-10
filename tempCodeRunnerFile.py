@@ -1,2 +1,4 @@
-for thing in range(100):
-	    
+
+l = []
+l.append(18)
+print(l)
