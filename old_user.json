@@ -1,0 +1,96 @@
+{
+  "x": {
+    "status": false,
+    "friend": [
+      "Haii",
+      "Hai",
+      "y",
+      "z"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "y": {
+    "status": false,
+    "friend": [
+      "z",
+      "x"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Hai": {
+    "status": false,
+    "friend": [
+      "Haii",
+      "Phung",
+      "Tu",
+      "x"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Haii": {
+    "status": false,
+    "friend": [
+      "Hai",
+      "Hung",
+      "Ha",
+      "Linh",
+      "x"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Hung": {
+    "status": false,
+    "friend": [
+      "Haii"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Ha": {
+    "status": false,
+    "friend": [
+      "Haii"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Linh": {
+    "status": false,
+    "friend": [
+      "Tu",
+      "Haii"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Tu": {
+    "status": false,
+    "friend": [
+      "Linh",
+      "Hai"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "Phung": {
+    "status": false,
+    "friend": [
+      "Hai"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  },
+  "z": {
+    "status": false,
+    "friend": [
+      "y",
+      "x"
+    ],
+    "fr_request": [],
+    "send_fr_request": []
+  }
+}

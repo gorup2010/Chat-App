@@ -1,53 +1,23 @@
 {
-  "Hai": {
+  "x": {
     "status": false,
     "friend": [
-      "Haii"
+      "y"
     ],
     "fr_request": [],
     "send_fr_request": []
   },
-  "Haii": {
+  "y": {
     "status": false,
     "friend": [
-      "Hai",
-      "Hung",
-      "Ha",
-      "Linh"
+      "x"
     ],
     "fr_request": [],
     "send_fr_request": []
   },
-  "Hung": {
+  "z": {
     "status": false,
-    "friend": [
-      "Haii"
-    ],
-    "fr_request": [],
-    "send_fr_request": []
-  },
-  "Ha": {
-    "status": false,
-    "friend": [
-      "Haii"
-    ],
-    "fr_request": [],
-    "send_fr_request": []
-  },
-  "Linh": {
-    "status": false,
-    "friend": [
-      "Tu",
-      "Haii"
-    ],
-    "fr_request": [],
-    "send_fr_request": []
-  },
-  "Tu": {
-    "status": false,
-    "friend": [
-      "Linh"
-    ],
+    "friend": [],
     "fr_request": [],
     "send_fr_request": []
   }

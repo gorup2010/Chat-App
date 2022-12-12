@@ -17,11 +17,18 @@ RETRIEVE_FR_MSG = "FRIEND"
 RETRIEVE_ONL_MSG = "ONLINE"
 RETRIEVE_FR_REQUEST_MSG = "FRREQUEST"
 RETRIEVE_SEND_FR_REQUEST_MSG = "SREREQUEST"
-RETRIEVE_ADDRESS = "ADDR"
+RETRIEVE_ADDRESS = "RETRIADDR"
 ADDFRIEND_MSG = "ADD"
 ACCEPT_MSG = "ACCEPT"
 
 # Message server gửi cho user
+LOGIN_SUCCEED = "SUCCEED"
+LOGIN_FAIL = "FAIL"
+CLOSE_SUCCEDD = "SUCCEED"
+LOGOUT_SUCCEED = "OUT_SUCCEED"
+USER_ONLINE = "ON"
+USER_OFFLINE = "OFF"
+USER_ADDRESS = "ADDR"
 # ADDFRIEND_MSG = "ADD"
 # ACCEPT_MSG = "ACCEPT"
 
@@ -54,16 +61,17 @@ class Server:
 
         while True:
             msg = conn_s.recv(1024).decode('utf-8')
-            if msg != "":
-                print(f"Nhan duoc msg: {msg}")
+            print(f"Nhan duoc msg: {msg}")
             command, content = msg.split(':', 1)
 
             result = ""
             if command == SIGNUP_MSG:
-                result, username = self.create_new_account(content, conn_s, address)
+                c_host = address[0]
+                result, username = self.create_new_account(content, conn_s, c_host)
 
             if command == LOGIN_MSG:
-                result, username = self.validation_account(content, conn_s, address)
+                c_host = address[0]
+                result, username = self.validation_account(content, conn_s, c_host)
 
             if command == LOGOUT_MSG:
                 result = self.log_out(username)
@@ -71,19 +79,22 @@ class Server:
 
             if command == RETRIEVE_FR_MSG:
                 list_of_fr = self.retrieve_fr(username)
-                conn_s.sendall(pickle.dumps(list_of_fr))
+                conn_s.send(pickle.dumps(list_of_fr))
 
             if command == RETRIEVE_FR_REQUEST_MSG:
                 list_of_fr_request = self.retrieve_fr_request(username)
-                conn_s.sendall(pickle.dumps(list_of_fr_request))
+                conn_s.send(pickle.dumps(list_of_fr_request))
 
             if command == RETRIEVE_SEND_FR_REQUEST_MSG:
                 list_of_send_fr_request = self.retrieve_send_fr_request(username)
-                conn_s.sendall(pickle.dumps(list_of_send_fr_request))
+                conn_s.send(pickle.dumps(list_of_send_fr_request))
 
             if command == RETRIEVE_ONL_MSG:
                 list_of_onl_user = self.retrieve_onl_user()
-                conn_s.sendall(pickle.dumps(list_of_onl_user))
+                conn_s.send(pickle.dumps(list_of_onl_user))
+
+            if command == RETRIEVE_ADDRESS:
+                result = self.retrieve_addr(content)
 
             if command == ADDFRIEND_MSG:
                 self.send_fr_request(username, content)
@@ -93,7 +104,7 @@ class Server:
 
             if command == CLOSE_MSG:    # Client yêu cầu ngắt kết nối
                 # Gửi phản hồi về cho client và đóng socket
-                conn_s.send("SUCCEED".encode('utf-8'))
+                conn_s.send(CLOSE_SUCCEDD.encode('utf-8'))
                 conn_s.close()
                 print(f"Connection with {str(address)} close")
                 break
@@ -102,7 +113,10 @@ class Server:
                 conn_s.send(result.encode('utf-8'))
 
     # Tạo tài khoản mới
-    def create_new_account(self, username, conn_s, address):
+    def create_new_account(self, content, conn_s, c_host):
+        username, l_port = content.split(":",1)
+        l_port = int(l_port)
+        address = (c_host, l_port)
         if not os.path.exists('user.json'):
             # Thêm tài khoản vào file user.json
             data = {
@@ -115,20 +129,26 @@ class Server:
             }
             with open('user.json', 'w') as file:
                 json.dump(data, file, indent=2)
-            result = "SUCCEED"
+            result = LOGIN_SUCCEED
             username_res = username
+
+            # Thông báo cho các user khác một user đã online
+            msg = USER_ONLINE + ":" + username
+            for user in self.onl_dict:
+                self.onl_dict[user]['conn'].send(msg.encode("utf-8"))
+
             # Thêm user vào dict on_user
             self.onl_dict[username] = {
                 "address" : address,
                 "conn" : conn_s
             }
 
-            print(f"New account: {username}")     
+            print(f"New account: {username}") 
         else:
             with open('user.json', 'r') as file:
                 data = json.load(file)
             if username in data:
-                result = "FAIL"
+                result = LOGIN_FAIL
                 username_res = ""
             else:
                 # Thêm tài khoản vào file user.json
@@ -140,8 +160,13 @@ class Server:
                 }
                 with open('user.json', 'w') as file:
                     json.dump(data, file, indent=2)
-                result = "SUCCEED"
+                result = LOGIN_SUCCEED
                 username_res = username
+
+                # Thông báo cho các user khác một user đã online
+                msg = USER_ONLINE + ":" + username
+                for user in self.onl_dict:
+                    self.onl_dict[user]['conn'].send(msg.encode("utf-8"))
 
                 # Thêm user vào dict on_user
                 self.onl_dict[username] = {
@@ -149,13 +174,16 @@ class Server:
                     "conn" : conn_s
                 }
 
-                print(f"New account: {username}") 
+                print(f"New account: {username}")
         return result, username_res
 
     # Kiểm tra username
-    def validation_account(self, username, conn_s, address):
+    def validation_account(self, content, conn_s, c_host):
+        username, l_port = content.split(":",1)
+        l_port = int(l_port)
+        address = (c_host, l_port)
         if not os.path.exists('user.json'):
-            result = "FAIL"
+            result = LOGIN_FAIL
             username_res = ""
         else:
             with open('user.json', 'r') as file:
@@ -165,9 +193,14 @@ class Server:
                 data[username]["status"] = True
                 with open('user.json', 'w') as file:
                     json.dump(data, file, indent=2)
-                result = "SUCCEED"
+                result = LOGIN_SUCCEED
                 username_res = username
                 print(f"{username} log in")  
+
+                # Thông báo cho các user khác một user đã online
+                msg = USER_ONLINE + ":" + username
+                for user in self.onl_dict:
+                    self.onl_dict[user]['conn'].send(msg.encode("utf-8"))
 
                 # Thêm user vào dict on_user
                 self.onl_dict[username] = {
@@ -175,20 +208,20 @@ class Server:
                     "conn" : conn_s
                 }
             else:
-                result = "FAIL"
+                result = LOGIN_FAIL
                 username_res = ""
         return result, username_res
 
     # Username yêu cầu đăng xuất
     def log_out(self, username):
-        # Thông báo cho mọi user khác user này đã offline
-        # msg = 
-        # for user in self.onl_dict:
-        #     user['conn'].send
-
         # Xóa user trong onl user list
         del self.onl_dict[username]
- 
+
+        # Thông báo cho mọi user khác user này đã offline
+        msg = USER_OFFLINE + ":" + username
+        for user in self.onl_dict:
+            self.onl_dict[user]['conn'].send(msg.encode('utf-8'))
+
         # Chỉnh sửa trạng thái của user thành offline
         with open('user.json', 'r') as file:
                 data = json.load(file)
@@ -196,7 +229,13 @@ class Server:
         with open('user.json', 'w') as file:
             json.dump(data, file, indent=2)
         print(f"{username} log out")
-        return "SUCCEED"
+        return LOGOUT_SUCCEED + ":"
+
+    # Lấy về address của một user nào đó
+    def retrieve_addr(self, username):
+        host, port = self.onl_dict[username]['address']
+        res = USER_ADDRESS + ":" + username + ":" + host + ":" + str(port)
+        return res
 
     # Lấy danh sách bạn bè của user
     def retrieve_fr(self, username):
@@ -261,7 +300,6 @@ class Server:
         if recv_user in self.onl_dict:
             msg = ACCEPT_MSG + ':' + send_user
             self.onl_dict[recv_user]['conn'].send(msg.encode('utf-8'))
-
 
 server = Server()
 server.start()
